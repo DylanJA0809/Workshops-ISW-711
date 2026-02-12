@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Week 2 - Consume API Courses</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+
+    h2 {
+      color: #333;
+      margin-top: 30px;
+    }
+
+    input {
+      padding: 5px;
+      margin-bottom: 10px;
+      width: 200px;
+    }
+
+    button {
+      padding: 6px 12px;
+      margin-top: 5px;
+      cursor: pointer;
+    }
+
+    #result {
+      margin-top: 15px;
+      background: white;
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+  </style>
+
+  <script>
+    //Consultar cursos
+    const completed = (e) => {
+      const data = JSON.parse(e.target.responseText);
+      let html = "";
+
+      data.forEach(course => {
+        html += `<p><strong>Curso:</strong> ${course.name} | <strong>Créditos:</strong> ${course.credits}</p>`;
+      });
+
+      document.getElementById('result').innerHTML = html;
+    };
+
+    const error = () => console.log("Error al consumir la API");
+
+    function getCourses() {
+      const ajaxRequest = new XMLHttpRequest();
+      ajaxRequest.addEventListener("load", completed);
+      ajaxRequest.addEventListener("error", error);
+      ajaxRequest.open("GET", "http://localhost:3000/course");
+      ajaxRequest.send();
+    }
+
+    //Agregar curso
+    function addCourse() {
+      const name = document.getElementById('courseName').value;
+      const credits = document.getElementById('credits').value;
+      const course = { name, credits };
+
+      const ajaxRequest = new XMLHttpRequest();
+      ajaxRequest.addEventListener("load", completed);
+      ajaxRequest.addEventListener("error", error);
+      ajaxRequest.open("POST", "http://localhost:3000/course");
+      ajaxRequest.setRequestHeader("Content-Type", "application/json");
+      ajaxRequest.send(JSON.stringify(course));
+
+      document.getElementById('courseName').value = '';
+      document.getElementById('credits').value = '';
+      alert("Curso agregado exitosamente");
+    }
+  </script>
+</head>
+
+<body>
+
+  <h2>Agregar Curso</h2>
+
+  <label>Nombre del Curso</label><br>
+  <input type="text" id="courseName"><br>
+
+  <label>Cantidad de Créditos</label><br>
+  <input type="number" id="credits"><br>
+
+  <button onclick="addCourse()">Agregar Curso</button>
+
+  <h2>Consultar Cursos</h2>
+  <button onclick="getCourses();">Ver Cursos</button>
+
+  <h3>Resultados:</h3>
+  <div id="result"></div>
+
+</body>
+
+</html>
