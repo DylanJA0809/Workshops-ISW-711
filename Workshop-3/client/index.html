@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workshop - Teachers & Courses</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+
+    h2 {
+      color: #333;
+      margin-top: 30px;
+    }
+
+    input, select {
+      padding: 5px;
+      margin-bottom: 10px;
+      width: 280px;
+    }
+
+    button {
+      padding: 6px 12px;
+      margin-top: 5px;
+      cursor: pointer;
+      margin-right: 5px;
+    }
+
+    .box {
+      background: white;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+    }
+
+    .row {
+      border-bottom: 1px solid #eee;
+      padding: 8px 0;
+    }
+  </style>
+
+  <script>
+    const API = "http://localhost:3000";
+    const error = () => console.log("Error al consumir la API");
+
+    // PROFESORES
+
+    function renderTeachers(data) {
+      let html = "";
+
+      data.forEach(t => {
+        html += `
+          <div class="row">
+            <p>
+              <strong>Nombre:</strong> ${t.nombre || ""} |
+              <strong>Apellidos:</strong> ${t.apellidos || ""} |
+              <strong>Cédula:</strong> ${t.cedula || ""} |
+              <strong>Edad:</strong> ${t.edad || ""}
+            </p>
+            <button onclick="loadTeacherToForm('${t._id}')">Edit</button>
+            <button onclick="deleteTeacher('${t._id}')">Delete</button>
+          </div>
+        `;
+      });
+
+      document.getElementById("teachersResult").innerHTML = html;
+    }
+
+    function getTeachers() {
+      const ajaxRequest = new XMLHttpRequest();
+      ajaxRequest.addEventListener("load", (e) => {
+        const data = JSON.parse(e.target.responseText);
+        renderTeachers(data);
+        fillTeacherSelect(data);
+      });
+      ajaxRequest.addEventListener("error", error);
+      ajaxRequest.open("GET", `${API}/teacher`);
+      ajaxRequest.send();
+    }
+
+    function fillTeacherSelect(teachers) {
+      const select = document.getElementById("courseTeacherId");
+      select.innerHTML = "";
+
+      teachers.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t._id;
+        opt.textContent = `${t.nombre} ${t.apellidos}`;
+        select.appendChild(opt);
+      });
+    }
+
+    function saveTeacher() {
+      const id = document.getElementById("teacherId").value;
+
+      const nombre = document.getElementById("teacherNombre").value;
+      const apellidos = document.getElementById("teacherApellidos").value;
+      const cedula = document.getElementById("teacherCedula").value;
+      const edad = document.getElementById("teacherEdad").value;
+
+      const teacher = { nombre, apellidos, cedula, edad: Number(edad) };
+
+      const ajaxRequest = new XMLHttpRequest();
+      ajaxRequest.addEventListener("load", () => {
+        clearTeacherForm();
+        getTeachers();
+      });
+      ajaxRequest.addEventListener("error", error);
+
+      if (id) {
+        ajaxRequest.open("PUT", `${API}/teacher?id=${id}`);
+      } else {
+        ajaxRequest.open("POST", `${API}/teacher`);
+      }
+
+      ajaxRequest.setRequestHeader("Content-Type", "application/json");
+      ajaxRequest.send(JSON.stringify(teacher));
+    }
+
+    function loadTeacherToForm(id) {
+      const ajaxRequest = new XMLHttpRequest();
+      ajaxRequest.addEventListener("load", (e) => {
+        const t = JSON.parse(e.target.responseText);
+
+        document.getElementById("teacherId").value = t._id;
+        document.getElementById("teacherNombre").value = t.nombre || "";
+        document.getElementById("teacherApellidos").value = t.apellidos || "";
+        document.getElementById("teacherCedula").value = t.cedula || "";
+        document.getElementById("teacherEdad").value = t.edad || "";
+      });
+      ajaxRequest.addEventListener("error", error);
+      ajaxRequest.open("GET", `${API}/teacher?id=${id}`);
+      ajaxRequest.send();
+    }
+
+    function deleteTeacher(id) {
+      const ajaxRequest = new XMLHttpRequest();
+      ajaxRequest.addEventListener("load", () => {
+        getTeachers();
+        getCourses();
+      });
+      ajaxRequest.addEventListener("error", error);
+      ajaxRequest.open("DELETE", `${API}/teacher?id=${id}`);
+      ajaxRequest.send();
+    }
+
+    function clearTeacherForm() {
+      document.getElementById("teacherId").value = "";
+      document.getElementById("teacherNombre").value = "";
+      document.getElementById("teacherApellidos").value = "";
+      document.getElementById("teacherCedula").value = "";
+      document.getElementById("teacherEdad").value = "";
+    }
+
+    //CURSOS
+
+    function renderCourses(data) {
+      let html = "";
+
+      data.forEach(c => {
+        html += `
+          <div class="row">
+            <p>
+              <strong>Nombre:</strong> ${c.nombre || ""} |
+              <strong>Código:</strong> ${c.codigo || ""} |
+              <strong>Descripción:</strong> ${c.descripcion || ""} |
+              <strong>TeacherId:</strong> ${c.teacherId || ""}
+            </p>
+            <button onclick="loadCourseToForm('${c._id}')">Edit</button>
+            <button onclick="deleteCourse('${c._id}')">Delete</button>
+          </div>
+        `;
+      });
+
+      document.getElementById("coursesResult").innerHTML = html;
+    }
+
+    function getCourses() {
+      const ajaxRequest = new XMLHttpRequest();
+      ajaxRequest.addEventListener("load", (e) => {
+        const data = JSON.parse(e.target.responseText);
+        renderCourses(data);
+      });
+      ajaxRequest.addEventListener("error", error);
+      ajaxRequest.open("GET", `${API}/course`);
+      ajaxRequest.send();
+    }
+
+    function saveCourse() {
+      const id = document.getElementById("courseId").value;
+
+      const nombre = document.getElementById("courseNombre").value;
+      const codigo = document.getElementById("courseCodigo").value;
+      const descripcion = document.getElementById("courseDescripcion").value;
+      const teacherId = document.getElementById("courseTeacherId").value;
+
+      const course = { nombre, codigo, descripcion, teacherId };
+
+      const ajaxRequest = new XMLHttpRequest();
+      ajaxRequest.addEventListener("load", () => {
+        clearCourseForm();
+        getCourses();
+      });
+      ajaxRequest.addEventListener("error", error);
+
+      if (id) {
+        ajaxRequest.open("PUT", `${API}/course?id=${id}`);
+      } else {
+        ajaxRequest.open("POST", `${API}/course`);
+      }
+
+      ajaxRequest.setRequestHeader("Content-Type", "application/json");
+      ajaxRequest.send(JSON.stringify(course));
+    }
+
+    function loadCourseToForm(id) {
+      const ajaxRequest = new XMLHttpRequest();
+      ajaxRequest.addEventListener("load", (e) => {
+        const c = JSON.parse(e.target.responseText);
+
+        document.getElementById("courseId").value = c._id;
+        document.getElementById("courseNombre").value = c.nombre || "";
+        document.getElementById("courseCodigo").value = c.codigo || "";
+        document.getElementById("courseDescripcion").value = c.descripcion || "";
+        document.getElementById("courseTeacherId").value = c.teacherId || "";
+      });
+      ajaxRequest.addEventListener("error", error);
+      ajaxRequest.open("GET", `${API}/course?id=${id}`);
+      ajaxRequest.send();
+    }
+
+    function deleteCourse(id) {
+      const ajaxRequest = new XMLHttpRequest();
+      ajaxRequest.addEventListener("load", () => {
+        getCourses();
+      });
+      ajaxRequest.addEventListener("error", error);
+      ajaxRequest.open("DELETE", `${API}/course?id=${id}`);
+      ajaxRequest.send();
+    }
+
+    function clearCourseForm() {
+      document.getElementById("courseId").value = "";
+      document.getElementById("courseNombre").value = "";
+      document.getElementById("courseCodigo").value = "";
+      document.getElementById("courseDescripcion").value = "";
+    }
+
+  </script>
+</head>
+
+<body>
+
+  <h2>Profesores</h2>
+  <div class="box">
+    <input type="hidden" id="teacherId">
+
+    <label>Nombre</label><br>
+    <input type="text" id="teacherNombre"><br>
+
+    <label>Apellidos</label><br>
+    <input type="text" id="teacherApellidos"><br>
+
+    <label>Cédula</label><br>
+    <input type="text" id="teacherCedula"><br>
+
+    <label>Edad</label><br>
+    <input type="number" id="teacherEdad"><br>
+
+    <button onclick="saveTeacher()">Guardar</button>
+    <button onclick="clearTeacherForm()">Limpiar</button>
+
+    <h3>Lista de Profesores</h3>
+    <button onclick="getTeachers()">Ver Profesores</button>
+    <div id="teachersResult"></div>
+  </div>
+
+  <h2>Cursos</h2>
+  <div class="box">
+    <input type="hidden" id="courseId">
+
+    <label>Nombre</label><br>
+    <input type="text" id="courseNombre"><br>
+
+    <label>Código</label><br>
+    <input type="text" id="courseCodigo"><br>
+
+    <label>Descripción</label><br>
+    <input type="text" id="courseDescripcion"><br>
+
+    <label>Profesor</label><br>
+    <select id="courseTeacherId"></select><br>
+
+    <button onclick="saveCourse()">Guardar</button>
+    <button onclick="clearCourseForm()">Limpiar</button>
+
+    <h3>Lista de Cursos</h3>
+    <button onclick="getCourses()">Ver Cursos</button>
+    <div id="coursesResult"></div>
+  </div>
+
+</body>
+</html>
